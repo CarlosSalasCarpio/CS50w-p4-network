@@ -1,0 +1,100 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div class="row gx-5">
+    <div class="col">
+        <div class="p-3 border bg-light">
+
+            <div style="text-align: center;">
+                <h4>{{ user.username }}</h4>
+                <p><strong>{{ followers }}</strong> Followers</p>
+                <p><strong>{{ following }}</strong> Following</p>
+
+                {% if profile_owner == True %}
+                    
+                {% elif already_follows == True %}
+
+                <form method="post" action="{% url 'unfollow' user.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Unfollow</button>
+                </form>
+
+                {% elif already_follows == False %}
+
+                <form method="post" action="{% url 'follow' user.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Follow</button>
+                </form>
+
+                {% endif %}
+
+            </div>
+
+            <div>
+                <p>
+                {% for post in page_obj %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ post.created_by }}</h5>
+                        <small class="text-muted">{{ post.created_at }}</small>
+                    </div>
+                    <p id="post_body_{{ post.id }}" class="mb-1">{{ post.body }}</p>
+                    <small class="text-muted">
+
+                        <textarea id='edit_textarea_{{ post.id }}' style="display: none;"></textarea><br>
+                        <button class="btn btn-primary" id='edit_button_{{ post.id }}' style="display: none;">save</button>
+
+                        {% if request.user in post.likes.all %}
+                        <input id='like_button_{{ post.id }}' type="image" style="width: 20px;" onclick="like_post('{{ post.id }}', '{{ request.user.id }}')" src="{% static 'network/unlike.png' %}">
+                        {% else %}
+                        <input id='like_button_{{ post.id }}' type="image" style="width: 20px;" onclick="like_post('{{ post.id }}', '{{ request.user.id }}')" src="{% static 'network/like.png' %}">
+                        {% endif %}
+
+                        <p id="post_{{ post.id }}"> {{ post.number_of_likes }} </p>
+
+                        {% if user.is_authenticated and post.created_by_id == request.user.id %}
+                        <button onclick="edit_post('{{ post.id }}')">edit</button>
+                        <form method="POST" action="{% url 'delete_post' post.id %}">
+                            {% csrf_token %}
+                            <button type="submit">delete</button>
+                        </form><br>
+                        {% else %}
+                        {% endif %}
+                    </small>
+                </div>
+                <br>
+                    
+                {% endfor %}
+                </p>
+            </div>
+
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a></li>
+
+
+                    {% endif %}
+            
+                        
+                        <li class="page-item disabled"><a class="page-link" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a></li>
+                        
+            
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/posts.js' %}"></script>
+{% endblock %}
